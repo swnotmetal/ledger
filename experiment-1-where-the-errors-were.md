@@ -47,8 +47,8 @@ the relevant section name and concludes the model denied something that exists, 
 answer with a sentence beginning *"the label text does contain an Indications section…"* followed by
 unrelated text. It reads like a yes. The model was right and the product was wrong.
 
-The same question asked of a small local open-weights model, given the same section, was denied
-correctly 18 times out of 22. So this was never a model-specific weakness.
+The same question asked of a local open-weights model (Qwen2.5-7B, on one consumer GPU), given the
+same section, was denied correctly 18 times out of 22. So this was never a model-specific weakness.
 
 ## The corpus had a role too
 
@@ -100,7 +100,7 @@ meanings gives itself away.
 | method | accuracy | missed unsupported | blocked supported | separation (AUROC) | latency | cost per call |
 |---|---|---|---|---|---|---|
 | word matching | 67% | 31% | 37% | 0.79 | 0 ms | $0 |
-| embeddings | 83% | 13% | 25% | 0.88 | 39 ms | $0 |
+| embeddings — `bge-m3`, open weights, run on one local GPU | 83% | 13% | 25% | 0.88 | 39 ms | $0 |
 | commercial grounding guardrail | 67% | **0%** | **100%** | 0.63 | 595 ms | $0.00018 |
 | model as judge | **100%** | 0% | 0% | 1.00 | 622 ms | $0.000015 |
 
@@ -179,6 +179,54 @@ The first version of this axis had a defect of its own: it read the label's own 
 line, so a warnings section counted as carrying the boxed warning. Checking the section *body* instead
 found ten turns that had been scored as normal.
 
+## Could the model have warned us before it answered?
+
+If a wrong answer is generated, the interesting question is whether the state *before* generation
+already differed. Asking that of a hosted model is impossible — the API returns text, not activations.
+So the same counterfactual pairs were replayed on an open-weights model of comparable size
+(Qwen3.5-0.8B, 25 hidden states, greedy decoding) on a single consumer GPU, with a linear probe trained
+on those states. 40 pairs, 80 turns.
+
+**The obvious reading of that experiment is wrong**, and it took one more control to see it:
+
+| what was being predicted | best layer | AUROC |
+|---|---|---|
+| was the section present or absent | 13–24 | **1.000** |
+| was the answer wrong | 9 | 0.952 |
+
+A saved state that says "this is a different prompt" separates the two arms perfectly, and since most
+wrong answers sat in the absent arm, the 0.95 was mostly that same difference. Layer 0 sat at exactly
+0.500, which is the useful part: the pipeline leaks nothing into the first layer.
+
+The only question worth asking is the one *within* an arm — and the two arms turned out to be
+asymmetric:
+
+| arm | turns | wrong | AUROC |
+|---|---|---|---|
+| the section is missing — did it refuse, or answer anyway? | 40 | 21 | **0.972** |
+| the section is present — did it use it, or deny it? | 40 | **0** | nothing to measure |
+
+So on this model a pre-generation state does separate "will refuse" from "will answer without
+evidence", at n=40. Two controls, because a probe can always be reading something stupid:
+
+| feature | AUROC |
+|---|---|
+| prompt length alone | 0.744 |
+| the state itself | 0.972 |
+| the state, with length regressed out | 0.807 |
+
+Length is part of it — the answered turns had longer contexts, 82 words against 71 — but not all of
+it. Something survives the correction.
+
+**And it is a gate on a door this product does not use.** The failure the deployed model commits is
+denying a section it was given; this model never did that, zero times in forty pairs. A detector is
+only worth building for a failure that occurs, so the probe stops here. It is a result about a
+method, not about the product: the signal is real, and it points at the opposite arm.
+
+These runs were all on open weights on one machine — the 7B model asked the same 22 questions earlier,
+the `bge-m3` embeddings in the table above, and this probe. The deployed stack was never run locally;
+that comparison is only ever "does this behaviour belong to the model or to the task".
+
 ## The one fix that survived
 
 The evidence was rarely missing from the corpus — the query just didn't name the section. Re-asking
@@ -206,3 +254,9 @@ invite them.
 One cloud account, one label corpus, two models from the same family, English only. 683 labels is a
 small corpus. The judgment of "does this answer address the question" is ultimately ours, and we
 labelled 78 answers by hand — enough to find mechanism, not enough for a confidence interval on a rate.
+The local runs do not measure the deployed system. A 7B model answered the 22 questions, `bge-m3`
+scored the paraphrase items, and a 0.8B model supplied the activations — three different open-weights
+models on one GPU, none of them the model the product calls. They answer "does this behaviour belong
+_to the task or to the vendor_" and nothing else. The probe result in particular is a statement about
+one small model's internal state; nothing about it transfers to a model whose activations we cannot
+read.
