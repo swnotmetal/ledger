@@ -1,11 +1,23 @@
-# Reliability Benchmarking for Evidence-Grounded AI
+# L.E.D.G.E.R
+
+**L**abel **E**vidence & **D**eterministic **G**rounding **E**rror **R**outer. The name comes from the
+first domain below; the measurement work kept it when the second domain arrived, because the failure
+classes did not change as much as the data did.
 
 An AI assistant answers questions from documents it is given. When the answer is wrong, which part of
 the system made it wrong — and can you tell from the answer alone?
 
-That question is the whole content of this repository. It holds the write-up of two experiments, the
-case definitions we used, and the measured tables. It does not hold code, customer data, or the
-document corpus. Everything here is a record of what we measured and how we measured it.
+That question is the whole content of this repository. It is the benchmarking and evaluation half of
+the project: the write-up of two experiments, the case definitions, and the measured tables. It holds
+no code, no customer data, and no document corpus.
+
+The project has three layers, and only the first two are published here:
+
+| layer | what it is | in this repo |
+|---|---|---|
+| **benchmark** | fixed cases with ground truth, and the labels for what a correct answer is | yes — [`examples.md`](examples.md) shows the shape |
+| **evaluation** | how a verdict is decided, and how a wrong answer is attributed to a layer | yes — both experiment write-ups are about this |
+| **implementation** | the assistant itself, on AWS: retrieval, model, guards | no — the reference implementation is not published |
 
 ---
 
@@ -53,3 +65,11 @@ What the inputs look like (examples only, invented) → [`examples.md`](examples
 The assistant answers only from retrieved label sections, cites the section it used, and is never
 allowed to state a dose. Those are product decisions, and they matter for reading the results: a
 "refusal to give a dose" is correct behaviour here, not a failure to answer.
+
+## Licence
+
+Text and tables in this repository are licensed [CC BY 4.0](LICENSE). Attribution: L.E.D.G.E.R,
+https://github.com/swnotmetal/ledger.
+
+If you cite a number, cite the experiment it came from rather than the repository as a whole. The two
+experiments were run on different corpora and their numbers are not comparable with each other.

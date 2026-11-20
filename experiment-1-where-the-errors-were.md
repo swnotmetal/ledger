@@ -1,5 +1,8 @@
 # Experiment 1 — 683 drug labels, 200 questions, and the discovery that most of our "hallucinations" were ours
 
+The first domain L.E.D.G.E.R was built for. What follows is the order the work happened in, including
+the three times a number we published to ourselves turned out to measure our own code.
+
 ## The question we actually had
 
 Not *"can a chatbot answer questions about drug labels?"* — that is easy to demo and hard to trust.

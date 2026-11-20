@@ -1,5 +1,8 @@
 # Experiment 2 — We moved the benchmark to a different system, and only the questions came with it
 
+The point of this experiment was never accuracy. It was whether L.E.D.G.E.R's apparatus — fixed cases,
+layer-by-layer attribution, deterministic scoring — is a property of the method or of the first domain.
+
 ## Why bother
 
 A benchmark that only works on the system it was built for is a demo with a spreadsheet attached. The
