@@ -9,7 +9,12 @@ the system made it wrong — and can you tell from the answer alone?
 
 That question is the whole content of this repository. It is the benchmarking and evaluation half of
 the project: the write-up of two experiments, the case definitions, and the measured tables. It holds
-no code, no customer data, and no document corpus.
+no product code, no customer data, and no document corpus.
+
+It does hold **one module**, [`detector/`](detector/): the rules that decide whether an automated check
+is allowed to say "the document does not cover this". About a hundred lines, no dependencies, no
+corpus, and a test file where every case is a mistake we actually made. A rule that cannot be run
+cannot be checked, so this part is executable.
 
 The project has three layers, and only the first two are published here:
 
@@ -18,6 +23,40 @@ The project has three layers, and only the first two are published here:
 | **benchmark** | fixed cases with ground truth, and the labels for what a correct answer is | yes — [`examples.md`](examples.md) shows the shape |
 | **evaluation** | how a verdict is decided, and how a wrong answer is attributed to a layer | yes — both experiment write-ups are about this |
 | **implementation** | the assistant itself, on AWS: retrieval, model, guards | no — the reference implementation is not published |
+
+Only one piece crosses that line: the absence-triage rules in [`detector/`](detector/), because they are
+the part of the evaluation that other people can run against their own documents.
+
+---
+
+## A detector you can run
+
+[`detector/guard-triage.mjs`](detector/guard-triage.mjs) answers one question: **may code state that a
+document does not cover something?** It says yes for exactly two situations — the section was never
+retrieved, or the section exists and says nothing — and no for everything else, including "the words
+are absent", which is the case that cost us four wrong accusations on paraphrased questions.
+
+```bash
+node detector/demo.mjs                  # four real incidents, and what the rules say about each
+node detector/guard-triage.test.mjs     # 12 tests, every one of them a mistake we made
+```
+
+```js
+import { triage } from './guard-triage.mjs';
+
+const out = triage({
+  question: 'what does it say about dangerously low blood calcium?',
+  body: 'SEVERE HYPOCALCEMIA. Monitor closely and treat symptomatic hypocalcemia promptly.',
+  sectionNames: ['Indications', 'Warnings and Precautions', 'Boxed Warning'],
+  availableSections: ['Warnings and Precautions'],
+});
+
+// out.state      'topic_absent_by_words'
+// out.assertable false  -> surface the section, or ask the model. Do not write the denial.
+```
+
+The contract is the point: `assertable` is `true` in two states out of six. The rest are findings for a
+model or a person, which is exactly what the write-ups above argue at length.
 
 > **The assistant is running here: <https://ledger.swbuilds.workers.dev>**
 > It answers from retrieved label sections, names the label, and refuses to state a dose — including
