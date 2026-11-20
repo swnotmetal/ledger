@@ -19,6 +19,12 @@ The project has three layers, and only the first two are published here:
 | **evaluation** | how a verdict is decided, and how a wrong answer is attributed to a layer | yes — both experiment write-ups are about this |
 | **implementation** | the assistant itself, on AWS: retrieval, model, guards | no — the reference implementation is not published |
 
+> **The assistant is running here: <https://ledger.swbuilds.workers.dev>**
+> It answers from retrieved label sections, names the label, and refuses to state a dose — including
+> when the label does. Five questions per ten minutes, thirty a day, which is enough to see how it
+> behaves and not enough to use it for anything. It is a demonstration of the contract described
+> above, not a medical tool.
+
 ---
 
 ## The two experiments
